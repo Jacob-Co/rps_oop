@@ -30,10 +30,15 @@ class Move
 end
 
 class Player
-  attr_accessor :move, :name
+  attr_accessor :move, :name, :score
 
   def initialize
     set_name
+    @score = 0
+  end
+
+  def reset_score
+    @score = 0
   end
 end
 
@@ -102,11 +107,11 @@ class RPSGame
     puts "#{computer.name} chose #{computer.move}"
   end
 
-  def display_winner
+  def display_round_winner
     if human.move > computer.move
-      puts "#{human.name} won!"
+      puts "#{human.name} gains one point!"
     elsif computer.move > human.move
-      puts "#{computer.name} won!"
+      puts "#{computer.name} gains one point!"
     else
       puts "It's a tie"
     end
@@ -125,18 +130,57 @@ class RPSGame
     return false if answer.downcase == 'n'
   end
 
+  def display_score
+    puts "#{human.name} : #{human.score}"
+    puts "#{computer.name} : #{computer.score}"
+  end
+
+  def win_condition?
+    !!(match_winner)
+  end
+
+  def match_winner
+    return human if human.score >= 3
+    return computer if computer.score >= 3
+  end
+
+  def display_winner
+    puts "#{match_winner.name} wins the match" if win_condition?
+  end
+
+  def award_point
+    if human.move > computer.move
+      human.score += 1
+    elsif computer.move > human.move
+      computer.score += 1
+    end
+  end
+
   def play
     display_welcome_message
 
+    loop do
+      match
+      display_winner
+      human.reset_score
+      computer.reset_score
+      break unless play_again?
+    end
+    display_goodbye_message
+  end
+
+  def match
     loop do
       human.choose
       computer.choose
       display_moves
       loading
-      display_winner
-      break unless play_again?
+      display_round_winner
+      award_point
+      display_score
+      break if win_condition?
+      loading
     end
-    display_goodbye_message
   end
 end
 
