@@ -1,27 +1,42 @@
 class Move
   attr_reader :value
-  VALUES = ['rock', 'paper', 'scissors']
+  VALUES = ['rock', 'paper', 'scissors', 'lizard', 'spock']
+  ROCK_BEATS = ['scissors', 'lizard']
+  PAPER_BEATS = ['rock', 'spock']
+  SCISSORS_BEATS = ['paper', 'lizard']
+  SPOCK_BEATS = ['rock', 'scissors']
+  LIZARD_BEATS = ['spock', 'paper']
 
   def initialize(value)
     @value = value
   end
 
-  def scissors?
-    @value == 'scissors'
+  def scissors_win?(other_move)
+    @value == 'scissors' && SCISSORS_BEATS.include?(other_move.value)
   end
 
-  def rock?
-    @value == 'rock'
+  def rock_win?(other_move)
+    @value == 'rock' && ROCK_BEATS.include?(other_move.value)
   end
 
-  def paper?
-    @value == 'paper'
+  def paper_win?(other_move)
+    @value == 'paper' && PAPER_BEATS.include?(other_move.value)
+  end
+
+  def lizard_win?(other_move)
+    @value == 'lizard' && LIZARD_BEATS.include?(other_move.value)
+  end
+
+  def spock_win?(other_move)
+    @value == 'spock' && SPOCK_BEATS.include?(other_move.value)
   end
 
   def >(other_move)
-    (rock? && other_move.scissors?) ||
-      (paper? && other_move.rock?) ||
-      (scissors? && other_move.paper?)
+    scissors_win?(other_move) ||
+      rock_win?(other_move) ||
+      paper_win?(other_move) ||
+      lizard_win?(other_move) ||
+      spock_win?(other_move)
   end
 
   def to_s
@@ -57,7 +72,7 @@ class Human < Player
   def choose
     choice = nil
     loop do
-      puts "Please choose rock, paper, or scissors:"
+      puts "Please choose #{Move::VALUES.join(', ')}:"
       choice = gets.chomp
       break if Move::VALUES.include?(choice)
       puts "Sorry invalid choice"
@@ -85,17 +100,18 @@ class RPSGame
   end
 
   def display_welcome_message
-    puts "Welcome to Rock, Paper, Scissors!"
+    puts "Welcome to #{Move::VALUES.map(&:capitalize).join(', ')}!"
   end
 
   def display_goodbye_message
-    puts "Thanks for playing Rock, Paper, Scissors. Good bye!"
+    puts "Thanks for playing #{Move::VALUES.map(&:capitalize).join(', ')}."
+    puts 'Good bye!'
   end
 
   def loading
     3.times do
       print '.'
-      sleep 0.55
+      sleep 0.35
     end
     puts
   end
