@@ -91,12 +91,107 @@ class Computer < Player
   end
 end
 
+class GameHistory
+  attr_reader :human, :computer
+
+  def initialize(human, computer)
+    @move_number = 1
+    @round_number = 1
+    @round_history = {}
+    @match_history = { 0 => "Start of round #{@round_number}" }
+    @human = human
+    @computer = computer
+    @human_rounds_won = 0
+    @computer_rounds_won = 0
+  end
+
+  def record_move
+    @match_history[@move_number] = "Turn #{@move_number} \n" \
+                                   "#{human.name} chose #{human.move} \n" \
+                                   "#{computer.name} chose #{computer.move}\n"
+    @move_number += 1
+  end
+
+  def record_round_winner(winner)
+    if winner == human
+      @match_history['winner'] = "#{human.name} won round " \
+                                 "#{@round_number} \n"
+      @human_rounds_won += 1
+    elsif winner == computer
+      @match_history['winner'] = "#{computer.name} won round " \
+                                 "#{@round_number} \n"
+      @computer_rounds_won += 1
+    end
+  end
+
+  def record_match
+    @round_history[@round_number] = @match_history
+    @round_number += 1
+    @match_history = { 0 => "Start of round #{@round_number}" }
+    @move_number = 1
+  end
+
+  def display_move_history?
+    puts "Would you like to view the move history? (y/n)"
+    loop do
+      answer = gets.chomp
+      return true if answer.downcase == 'y'
+      return false if answer.downcase == 'n'
+      puts "Please type 'y' or 'n'"
+    end
+  end
+
+  def view_another_round?
+    puts "Do you want to view another round? (y/n)"
+    loop do
+      answer = gets.chomp
+      return true if answer.downcase == 'y'
+      return false if answer.downcase == 'n'
+      puts "Please input 'y' or 'n'"
+    end
+  end
+
+  def display_moves(n)
+    n = n.to_i
+    @round_history[n].values.each do |report|
+      puts report
+      puts
+    end
+  end
+
+  def choose_round
+    choices = (1..(@round_number - 1)).to_a.map(&:to_s)
+    puts "Choose what round number to view. From " \
+         "1 to #{@round_number - 1}"
+    loop do
+      answer = gets.chomp
+      return answer if choices.include?(answer)
+      puts "Please choose a number from 1 to #{@round_number - 1}"
+    end
+  end
+
+  def move_history_interface
+    return nil unless display_move_history?
+    if (@round_number - 1) == 1
+      display_moves(1)
+    else
+      loop do
+        answer = choose_round
+        display_moves(answer)
+        break unless view_another_round?
+      end
+    end
+  end
+end
+
 class RPSGame
-  attr_accessor :human, :computer
+  attr_accessor :human, :computer, :history
 
   def initialize
+    display_welcome_message
     @human = Human.new
     @computer = Computer.new
+    @history = GameHistory.new(@human, @computer)
   end
 
   def display_welcome_message
@@ -124,10 +219,14 @@ class RPSGame
   end
 
   def display_round_winner
-    if human.move > computer.move
-      puts "#{human.name} gains one point!"
-    elsif computer.move > human.move
-      puts "#{computer.name} gains one point!"
+    h_move = human.move
+    c_move = computer.move
+    if h_move > c_move
+      puts "#{h_move.to_s.capitalize} beats #{c_move} \n" \
+           "#{human.name} gains one point!"
+    elsif c_move > h_move
+      puts "#{c_move.to_s.capitalize} beats #{h_move} \n" \
+           "#{computer.name} gains one point!"
     else
       puts "It's a tie"
     end
@@ -172,12 +271,33 @@ class RPSGame
     end
   end
 
-  def play
-    display_welcome_message
-
+  def match
     loop do
+      system 'clear'
+      display_score
+      human.choose
+      computer.choose
+      history.record_move
+      resolve_match
+      loading
+      press_any_key('continue')
+      break if win_condition?
+    end
+  end
+
+  def press_any_key(message)
+    puts "Press enter to #{message}"
+    gets.chomp
+  end
+
+  def play
+    loop do
+      press_any_key('start')
       match
       display_winner
+      history.record_round_winner(match_winner)
+      history.record_match
+      history.move_history_interface
       human.reset_score
       computer.reset_score
       break unless play_again?
@@ -185,18 +305,13 @@ class RPSGame
     display_goodbye_message
   end
 
-  def match
-    loop do
-      human.choose
-      computer.choose
-      display_moves
-      loading
-      display_round_winner
-      award_point
-      display_score
-      break if win_condition?
-      loading
-    end
+  def resolve_match
+    display_moves
+    loading
+    display_round_winner
+    puts
+    award_point
+    display_score
   end
 end
 
