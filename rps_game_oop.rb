@@ -1,6 +1,8 @@
 class Move
   attr_reader :value
   VALUES = ['rock', 'paper', 'scissors', 'lizard', 'spock']
+  VALUES_SHORT = { 'r' => 'rock', 'p' => 'paper', 'l' => 'lizard',
+                   'sc' => 'scissors', 'sp' => 'spock' }
   ROCK_BEATS = ['scissors', 'lizard']
   PAPER_BEATS = ['rock', 'spock']
   SCISSORS_BEATS = ['paper', 'lizard']
@@ -69,11 +71,24 @@ class Human < Player
     self.name = n
   end
 
+  def move_shortcuts
+    Move::VALUES_SHORT.map do |short, long|
+      if short != Move::VALUES_SHORT.keys.last
+        "'#{short}' = #{long}, "
+      else
+        "'#{short}' = #{long}"
+      end
+    end
+  end
+
   def choose
     choice = nil
     loop do
       puts "Please choose #{Move::VALUES.join(', ')}:"
+      puts "Shortcuts: " + move_shortcuts.join
       choice = gets.chomp
+      break if Move::VALUES.include?(choice)
+      choice = Move::VALUES_SHORT[choice]
       break if Move::VALUES.include?(choice)
       puts "Sorry invalid choice"
     end
@@ -82,12 +97,82 @@ class Human < Player
 end
 
 class Computer < Player
+  attr_accessor :persona
+
+  def initialize
+    @persona = [R2d2.new, Hal.new, Chappie.new, Sonny.new, Number5.new].sample
+    super
+  end
+
   def set_name
-    self.name = ['R2D2', 'Hal', 'Chappie', 'Sonny', 'Number 5'].sample
+    self.name = persona.to_s
   end
 
   def choose
-    self.move = Move.new(Move::VALUES.sample)
+    choice = persona.choose
+    self.move = Move.new(choice)
+  end
+
+  def ==(other_computer)
+    name == other_computer.name
+  end
+end
+
+class R2d2
+  def to_s
+    "R2D2"
+  end
+
+  def choose
+    Move::VALUES.sample
+  end
+end
+
+class Hal
+  def to_s
+    "Hal"
+  end
+
+  def choose
+    ['spock', 'spock', 'scissors', 'lizard', 'spock', 'lizard'].sample
+  end
+end
+
+class Chappie
+  def to_s
+    "Chappie"
+  end
+
+  def choose
+    ['rock', 'paper', 'scissors'].sample
+  end
+end
+
+class Sonny
+  def to_s
+    "Sonny"
+  end
+
+  def choose
+    ['rock', 'rock', 'scissors', 'lizard'].sample
+  end
+end
+
+class Number5
+  def initialize
+    @counter = -1
+    @choices = ['paper', 'spock', Move::VALUES.sample,
+                'lizard', 'lizard', 'spock']
+  end
+
+  def to_s
+    "Number5"
+  end
+
+  def choose
+    @counter += 1
+    @counter = -1 if @counter > @choices.size
+    @choices[@counter]
   end
 end
 
@@ -103,6 +188,10 @@ class GameHistory
     @computer = computer
     @human_rounds_won = 0
     @computer_rounds_won = 0
+  end
+
+  def change_computer(computer)
+    @computer = computer
   end
 
   def record_move
@@ -271,38 +360,9 @@ class RPSGame
     end
   end
 
-  def match
-    loop do
-      system 'clear'
-      display_score
-      human.choose
-      computer.choose
-      history.record_move
-      resolve_match
-      loading
-      press_any_key('continue')
-      break if win_condition?
-    end
-  end
-
   def press_any_key(message)
     puts "Press enter to #{message}"
     gets.chomp
-  end
-
-  def play
-    loop do
-      press_any_key('start')
-      match
-      display_winner
-      history.record_round_winner(match_winner)
-      history.record_match
-      history.move_history_interface
-      human.reset_score
-      computer.reset_score
-      break unless play_again?
-    end
-    display_goodbye_message
   end
 
   def resolve_match
@@ -312,6 +372,50 @@ class RPSGame
     puts
     award_point
     display_score
+  end
+
+  def match
+    system 'clear'
+    display_score
+    human.choose
+    computer.choose
+    history.record_move
+    resolve_match
+    loading
+    press_any_key('continue')
+  end
+
+  def resolve_round
+    display_winner
+    history.record_round_winner(match_winner)
+    history.record_match
+    history.move_history_interface
+    human.reset_score
+    computer.reset_score # may no longer be useful
+    change_challenger
+    history.change_computer(computer)
+  end
+
+  def change_challenger
+    old_challenger = @computer
+
+    loop do
+      @computer = Computer.new
+      break unless @computer == old_challenger
+    end
+  end
+
+  def play
+    loop do
+      press_any_key('start')
+      loop do
+        match
+        break if win_condition?
+      end
+      resolve_round
+      break unless play_again?
+    end
+    display_goodbye_message
   end
 end
 
