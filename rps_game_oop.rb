@@ -114,20 +114,8 @@ class Human < Player
 end
 
 class Computer < Player
-  attr_accessor :persona
-
-  def initialize
-    @persona = [R2d2.new, Hal.new, Chappie.new, Sonny.new, Number5.new].sample
-    super
-  end
-
-  def set_name
-    self.name = persona.to_s
-  end
-
   def choose
-    choice = persona.choose
-    self.move = INIT_CHOICE[choice]
+    self.move = INIT_CHOICE[ai_choose]
   end
 
   def ==(other_computer)
@@ -135,58 +123,59 @@ class Computer < Player
   end
 end
 
-class R2d2
-  def to_s
-    "R2D2"
+class R2d2 < Computer
+  def set_name
+    self.name = "R2D2"
   end
 
-  def choose
+  def ai_choose
     Move::VALUES.sample
   end
 end
 
-class Hal
-  def to_s
-    "Hal"
+class Hal < Computer
+  def set_name
+    self.name = "Hal"
   end
 
-  def choose
+  def ai_choose
     ['spock', 'spock', 'scissors', 'lizard', 'spock', 'lizard'].sample
   end
 end
 
-class Chappie
-  def to_s
-    "Chappie"
+class Chappie < Computer
+  def set_name
+    self.name = "Chappie"
   end
 
-  def choose
+  def ai_choose
     ['rock', 'paper', 'scissors'].sample
   end
 end
 
-class Sonny
-  def to_s
-    "Sonny"
+class Sonny < Computer
+  def set_name
+    self.name = "Sonny"
   end
 
-  def choose
+  def ai_choose
     ['rock', 'rock', 'scissors', 'lizard'].sample
   end
 end
 
-class Number5
+class Number5 < Computer
   def initialize
+    super
     @counter = 0
     @choices = ['paper', 'spock', Move::VALUES.sample,
                 'lizard', 'lizard', 'spock']
   end
 
-  def to_s
-    "Number5"
+  def set_name
+    self.name = "Number5"
   end
 
-  def choose
+  def ai_choose
     ret = @choices[@counter]
     @counter += 1
     @counter = 0 if @counter >= @choices.size
@@ -297,7 +286,7 @@ class RPSGame
   def initialize
     display_welcome_message
     @human = Human.new
-    @computer = Computer.new
+    @computer = [R2d2.new, Hal.new, Chappie.new, Sonny.new, Number5.new].sample
     @history = GameHistory.new(@human, @computer)
   end
 
@@ -418,7 +407,8 @@ class RPSGame
     old_challenger = @computer
 
     loop do
-      @computer = Computer.new
+      @computer = [R2d2.new, Hal.new, Chappie.new, Sonny.new,
+                   Number5.new].sample
       break unless @computer == old_challenger
     end
   end
