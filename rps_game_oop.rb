@@ -1,53 +1,70 @@
 class Move
   attr_reader :value
   VALUES = ['rock', 'paper', 'scissors', 'lizard', 'spock']
+
   VALUES_SHORT = { 'r' => 'rock', 'p' => 'paper', 'l' => 'lizard',
                    'sc' => 'scissors', 'sp' => 'spock' }
-  ROCK_BEATS = ['scissors', 'lizard']
-  PAPER_BEATS = ['rock', 'spock']
-  SCISSORS_BEATS = ['paper', 'lizard']
-  SPOCK_BEATS = ['rock', 'scissors']
-  LIZARD_BEATS = ['spock', 'paper']
-
-  def initialize(value)
-    @value = value
-  end
-
-  def scissors_win?(other_move)
-    @value == 'scissors' && SCISSORS_BEATS.include?(other_move.value)
-  end
-
-  def rock_win?(other_move)
-    @value == 'rock' && ROCK_BEATS.include?(other_move.value)
-  end
-
-  def paper_win?(other_move)
-    @value == 'paper' && PAPER_BEATS.include?(other_move.value)
-  end
-
-  def lizard_win?(other_move)
-    @value == 'lizard' && LIZARD_BEATS.include?(other_move.value)
-  end
-
-  def spock_win?(other_move)
-    @value == 'spock' && SPOCK_BEATS.include?(other_move.value)
-  end
-
-  def >(other_move)
-    scissors_win?(other_move) ||
-      rock_win?(other_move) ||
-      paper_win?(other_move) ||
-      lizard_win?(other_move) ||
-      spock_win?(other_move)
-  end
 
   def to_s
     @value
   end
 end
 
+class Rock < Move
+  def initialize
+    @value = 'rock'
+  end
+
+  def >(other_move)
+    other_move.value == 'scissors' || other_move.value == 'lizard'
+  end
+end
+
+class Scissors < Move
+  def initialize
+    @value = 'scissors'
+  end
+
+  def >(other_move)
+    other_move.value == 'paper' || other_move.value == 'lizard'
+  end
+end
+
+class Paper < Move
+  def initialize
+    @value = 'paper'
+  end
+
+  def >(other_move)
+    other_move.value == 'rock' || other_move.value == 'spock'
+  end
+end
+
+class Lizard < Move
+  def initialize
+    @value = 'lizard'
+  end
+
+  def >(other_move)
+    other_move.value == 'spock' || other_move.value == 'paper'
+  end
+end
+
+class Spock < Move
+  def initialize
+    @value = 'spock'
+  end
+
+  def >(other_move)
+    other_move.value == 'rock' || other_move.value == 'scissors'
+  end
+end
+
 class Player
   attr_accessor :move, :name, :score
+  INIT_CHOICE = { 'rock' => Rock.new, 'paper' => Paper.new,
+                  'scissors' => Scissors.new, 'spock' => Spock.new,
+                  'lizard' => Lizard.new }
 
   def initialize
     set_name
@@ -92,7 +109,7 @@ class Human < Player
       break if Move::VALUES.include?(choice)
       puts "Sorry invalid choice"
     end
-    self.move = Move.new(choice)
+    self.move = INIT_CHOICE[choice]
   end
 end
 
@@ -110,7 +127,7 @@ class Computer < Player
 
   def choose
     choice = persona.choose
-    self.move = Move.new(choice)
+    self.move = INIT_CHOICE[choice]
   end
 
   def ==(other_computer)
@@ -160,7 +177,7 @@ end
 
 class Number5
   def initialize
-    @counter = -1
+    @counter = 0
     @choices = ['paper', 'spock', Move::VALUES.sample,
                 'lizard', 'lizard', 'spock']
   end
@@ -170,9 +187,10 @@ class Number5
   end
 
   def choose
+    ret = @choices[@counter]
     @counter += 1
-    @counter = -1 if @counter > @choices.size
-    @choices[@counter]
+    @counter = 0 if @counter >= @choices.size
+    ret
   end
 end
 
