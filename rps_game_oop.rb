@@ -1,5 +1,5 @@
 class Move
-  attr_reader :value
+  attr_reader :value, :beats
   VALUES = ['rock', 'paper', 'scissors', 'lizard', 'spock']
 
   VALUES_SHORT = { 'r' => 'rock', 'p' => 'paper', 'l' => 'lizard',
@@ -8,55 +8,44 @@ class Move
   def to_s
     @value
   end
+
+  def >(other_move)
+    beats.include?(other_move.value)
+  end
 end
 
 class Rock < Move
   def initialize
     @value = 'rock'
-  end
-
-  def >(other_move)
-    other_move.value == 'scissors' || other_move.value == 'lizard'
+    @beats = ['scissors', 'lizard']
   end
 end
 
 class Scissors < Move
   def initialize
     @value = 'scissors'
-  end
-
-  def >(other_move)
-    other_move.value == 'paper' || other_move.value == 'lizard'
+    @beats = ['paper', 'lizard']
   end
 end
 
 class Paper < Move
   def initialize
     @value = 'paper'
-  end
-
-  def >(other_move)
-    other_move.value == 'rock' || other_move.value == 'spock'
+    @beats = ['rock', 'spock']
   end
 end
 
 class Lizard < Move
   def initialize
     @value = 'lizard'
-  end
-
-  def >(other_move)
-    other_move.value == 'spock' || other_move.value == 'paper'
+    @beats = ['spock', 'paper']
   end
 end
 
 class Spock < Move
   def initialize
     @value = 'spock'
-  end
-
-  def >(other_move)
-    other_move.value == 'rock' || other_move.value == 'scissors'
+    @beats = ['rock', 'scissors']
   end
 end
 
